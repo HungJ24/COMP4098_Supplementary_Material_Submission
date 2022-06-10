@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+<!-- Include tobii darknet_ros launch file -->
+    <include file="$(find darknet_ros)/launch/darknet_ros_tobii.launch">
+    </include>
+
+</launch>

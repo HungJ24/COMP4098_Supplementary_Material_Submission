@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+    <!-- Tobii Pro Glasses Controller node -->
+    <node name="tobii_glasses_ctrl_node" pkg="spot_ros_autonomy" type="tobii_controller_node.py" output="screen" respawn="true">
+        <param name="ipv4_address_wlan"     value="192.168.71.50" />
+        <param name="ipv4_address_lan"      value="192.168.1.143" />
+        <param name="wlan"                  value="false" />
+        <param name="frame_id"              value="tobii_camera" />
+        <param name="debug"                 value="false" />
+    </node>
+</launch>

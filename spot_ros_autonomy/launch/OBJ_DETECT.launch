@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+
+    <!-- Node for working on Gaze data and Yolo bounding box data -->
+    <node name="spot_yolo_node" pkg="spot_ros_autonomy" type="object_detection_node.py" output="screen" respawn="true">
+        <param name="frame_id"          value="front_camera_link_optical"/>
+        <param name="debug"             value="false" />
+    </node>
+
+</launch>

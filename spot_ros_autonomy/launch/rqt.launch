@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+    <node pkg="rqt_graph" name="rqt_graph" type="rqt_graph" />
+
+</launch>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<launch>
+    <arg name="robot_name"          default="/"/> <!-- Change this for namespacing. -->
+    <arg name="rviz"                default="false"/> <!-- Set to true to run rviz in parallel. -->
+    <arg name="lite"                default="false"/>  <!-- Set to true if you're using CHAMP lite version. Only useful for microcontrollers. -->
+    <arg name="use_sim_time"        default="true"/>
+    <arg name="ros_control_file"    default="$(find spot_config)/config/ros_control/ros_control.yaml"/> <!-- Path to ROS Control configurations. Do not touch. -->
+    <arg name="gazebo_world"        default="$(find spot_ros_autonomy)/worlds/SAR.world"/> <!-- Path to Gazebo world you want to load. -->
+    <arg name="gui"                 default="false"/>
+    <arg name="world_init_x"        default="0" /> <!-- X Initial position of the robot in Gazebo World -->
+    <arg name="world_init_y"        default="0" /> <!-- Y Initial position of the robot in Gazebo World -->
+    <arg name="world_init_z"        default="0.7" /> <!-- Z Initial position of the robot in Gazebo World -->
+    <arg name="world_init_heading"  default="0" /> <!-- Initial heading of the robot in Gazebo World -->
+    <arg name="joy"                 default="true"/>
+    <arg name="dev"                 default="/dev/input/js0"/>
+    
+    <include file="$(find spot_config)/launch/bringup.launch">
+        <arg name="robot_name"              value="$(arg robot_name)"/>
+        <arg name="gazebo"                  value="true"/>
+        <arg name="lite"                    value="$(arg lite)"/>
+        <arg name="rviz"                    value="$(arg rviz)"/>
+        <arg name="joint_controller_topic"  value="joint_group_position_controller/command"/>
+        <arg name="hardware_connected"      value="false"/>
+        <arg name="publish_foot_contacts"   value="false"/>
+        <arg name="close_loop_odom"         value="true"/>
+    </include>
+
+    <include file="$(find champ_gazebo)/launch/gazebo.launch">
+        <arg name="robot_name"              value="$(arg robot_name)"/>
+        <arg name="lite"                    value="$(arg lite)"/>
+        <arg name="ros_control_file"        value="$(arg ros_control_file)"/>
+        <arg name="gazebo_world"            value="$(arg gazebo_world)"/>
+        <arg name="world_init_x"            value="$(arg world_init_x)"/>
+        <arg name="world_init_y"            value="$(arg world_init_y)"/>
+        <arg name="world_init_z"            value="$(arg world_init_z)"/>
+        <arg name="world_init_heading"      value="$(arg world_init_heading)"/>
+        <arg name="gui"                     value="$(arg gui)"/>
+    </include>
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        </plugin>
+    </gazebo>
+
+    <!-- Image proc node  -->
+    <node name="image_proc_front" pkg="image_proc" type="image_proc" ns="/camera1_IR/color" respawn="true"/>
+
+    <!-- Joystick Control -->
+    <node if="$(arg joy)" name="joy" pkg="joy" type="joy_node" respawn="true">
+        <param name="autorepeat_rate"   value="20"/>
+        <param name="dev"               value="$(arg dev)"/>
+    </node>
+
+     <!-- Depth image to laser scan -->
+    <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="front_depthimage_to_laserscan" respawn="true">
+        <param name="scan_height"       value="5"/>
+        <param name="range_min"         value="0.03"/>
+        <param name="range_max"         value="1.0"/>
+        <param name="output_frame_id"   value="front_camera_link_optical"/>
+        <remap from="image"             to="/camera1_IR/depth/image_raw"/>
+        <remap from="scan"              to="/front/scan/laserscan"/>
+    </node>
+
+    <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="rear_depthimage_to_laserscan" respawn="true">
+        <param name="scan_height"       value="5"/>
+        <param name="range_min"         value="0.03"/>
+        <param name="range_max"         value="1.0"/>
+        <param name="output_frame_id"   value="rear_camera_link_optical"/>
+        <remap from="image"             to="/camera2_IR/depth/image_raw"/>
+        <remap from="scan"              to="/rear/scan/laserscan"/>
+    </node>
+
+    <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="left_depthimage_to_laserscan" respawn="true">
+        <param name="scan_height"       value="5"/>
+        <param name="range_min"         value="0.03"/>
+        <param name="range_max"         value="1.0"/>
+        <param name="output_frame_id"   value="left_camera_link_optical"/>
+        <remap from="image"             to="/camera3_IR/depth/image_raw"/>
+        <remap from="scan"              to="/left/scan/laserscan"/>
+    </node>
+
+    <node pkg="depthimage_to_laserscan" type="depthimage_to_laserscan" name="right_depthimage_to_laserscan" respawn="true">
+        <param name="scan_height"       value="5"/>
+        <param name="range_min"         value="0.03"/>
+        <param name="range_max"         value="1.0"/>
+        <param name="output_frame_id"   value="right_camera_link_optical"/>
+        <remap from="image"             to="/camera4_IR/depth/image_raw"/>
+        <remap from="scan"              to="/right/scan/laserscan"/>
+    </node>
+
+    <!-- QR code overlay image node -->
+    <node name="qr_code_overlay_node" pkg="spot_ros_autonomy" type="qr_code_overlay.py" output="screen" respawn="true">
+        <param name="debug"             value="false" />
+    </node>
+
+    <!-- Main Fuzzy Logic Controller node -->
+    <node name="spot_flc_node" pkg="spot_ros_autonomy" type="fuzzy_logic_controller_node.py" output="screen" respawn="true">
+        <param name="ai"                value="false"/>
+        <param name="debug"             value="false" />
+        <param name="joy"               value="$(arg joy)"/>
+    </node>
+
+</launch>
